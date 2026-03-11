@@ -6,3 +6,76 @@ body {
   background-color: #0a0a0a;
   color: #e5e5e5;
 }
+
+/* Safe area for iPhone bottom tab bar */
+.pb-safe {
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+}
+
+/* Markdown content renderer styles */
+.md-content h1 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin: 1.25rem 0 0.5rem;
+}
+.md-content h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #e2e8f0;
+  margin: 1rem 0 0.4rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.md-content h3 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #cbd5e1;
+  margin: 0.75rem 0 0.3rem;
+}
+.md-content p {
+  font-size: 0.875rem;
+  color: #9ca3af;
+  line-height: 1.65;
+  margin: 0.2rem 0;
+}
+.md-content li {
+  font-size: 0.875rem;
+  color: #9ca3af;
+  margin: 0.2rem 0 0.2rem 1.25rem;
+  list-style: disc;
+  line-height: 1.6;
+}
+.md-content pre {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  overflow-x: auto;
+  margin: 0.75rem 0;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.75rem;
+  color: #d1d5db;
+  line-height: 1.5;
+}
+.md-content pre code {
+  background: none;
+  padding: 0;
+  font-size: inherit;
+}
+.md-content code {
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0.1em 0.35em;
+  border-radius: 3px;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.82em;
+  color: #93c5fd;
+}
+.md-content strong {
+  color: #e2e8f0;
+  font-weight: 600;
+}
+.md-content em {
+  color: #a5b4fc;
+  font-style: italic;
+}
