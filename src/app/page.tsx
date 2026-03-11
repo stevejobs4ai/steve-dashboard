@@ -3,9 +3,10 @@
 import { useEffect, useState, useCallback } from "react";
 
 type StatusType = "task_start" | "task_done" | "idle" | "info";
+type ActivitySource = "reece" | "steve" | "cron";
 type TaskStatus = "todo" | "in_progress" | "done";
 type TaskCategory = "build" | "research" | "design" | "bug";
-type Tab = "brain" | "tasks";
+type Tab = "brain" | "tasks" | "activity";
 
 interface CurrentStatus {
   text: string;
@@ -17,6 +18,7 @@ interface ActivityEntry {
   text: string;
   type: StatusType;
   timestamp: string;
+  source?: ActivitySource;
 }
 
 interface StatusData {
@@ -288,7 +290,7 @@ export default function Dashboard() {
 
       {/* Tab Nav */}
       <nav className="flex gap-1 mb-6 bg-[#111111] border border-[#1f1f1f] rounded-lg p-1 w-fit">
-        {(["brain", "tasks"] as Tab[]).map((t) => (
+        {(["brain", "tasks", "activity"] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -394,6 +396,58 @@ export default function Dashboard() {
           <KanbanColumn title="In Progress" tasks={inProgress} accentClass="text-green-400" />
           <KanbanColumn title="Done" tasks={done} accentClass="text-sky-400" />
         </div>
+      )}
+
+      {tab === "activity" && (
+        <section>
+          <div className="text-xs font-mono text-gray-500 uppercase tracking-widest mb-3">
+            Activity Log
+          </div>
+          <div className="bg-[#111111] border border-[#1f1f1f] rounded-xl overflow-hidden">
+            {log.length === 0 ? (
+              <div className="px-5 py-8 text-center text-gray-600 text-sm font-mono">
+                no activity yet
+              </div>
+            ) : (
+              <ul className="divide-y divide-[#1a1a1a]">
+                {log.slice(0, 100).map((entry, i) => (
+                  <li
+                    key={i}
+                    className="flex items-start gap-3 px-5 py-3 hover:bg-white/[0.02] transition-colors"
+                  >
+                    <span
+                      className={`text-[10px] font-mono font-bold mt-0.5 w-10 shrink-0 ${typeBadge(entry.type)}`}
+                    >
+                      {typeLabel(entry.type)}
+                    </span>
+                    <span className="text-sm text-gray-300 flex-1 leading-relaxed">
+                      {entry.text}
+                    </span>
+                    <div className="flex items-center gap-2 shrink-0 mt-0.5">
+                      <span
+                        className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded border ${
+                          entry.source === "reece"
+                            ? "bg-orange-950 text-orange-400 border-orange-800"
+                            : entry.source === "cron"
+                            ? "bg-violet-950 text-violet-400 border-violet-800"
+                            : "bg-green-950 text-green-400 border-green-800"
+                        }`}
+                      >
+                        {entry.source === "reece" ? "Reece" : entry.source === "cron" ? "Cron" : "Steve"}
+                      </span>
+                      <span
+                        className="text-[11px] font-mono text-gray-600"
+                        title={new Date(entry.timestamp).toLocaleString()}
+                      >
+                        {timeAgo(entry.timestamp)}
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
       )}
 
       {/* Footer */}

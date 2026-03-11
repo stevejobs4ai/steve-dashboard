@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
 type StatusType = "task_start" | "task_done" | "idle" | "info";
+type ActivitySource = "reece" | "steve" | "cron";
 
 const VALID_TYPES: StatusType[] = ["task_start", "task_done", "idle", "info"];
-const MAX_LOG_ENTRIES = 50;
+const VALID_SOURCES: ActivitySource[] = ["reece", "steve", "cron"];
+const MAX_LOG_ENTRIES = 100;
 const GIST_ID = process.env.GIST_ID!;
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN!;
 
@@ -17,6 +19,7 @@ interface ActivityEntry {
   text: string;
   type: StatusType;
   timestamp: string;
+  source: ActivitySource;
 }
 
 interface GistData {
@@ -73,14 +76,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let body: { text?: unknown; type?: unknown };
+  let body: { text?: unknown; type?: unknown; source?: unknown };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { text, type } = body;
+  const { text, type, source } = body;
 
   if (typeof text !== "string" || !text.trim()) {
     return NextResponse.json({ error: "text must be a non-empty string" }, { status: 400 });
@@ -93,9 +96,14 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const resolvedSource: ActivitySource =
+    source !== undefined && VALID_SOURCES.includes(source as ActivitySource)
+      ? (source as ActivitySource)
+      : "steve";
+
   const now = new Date().toISOString();
   const currentStatus: CurrentStatus = { text: text.trim(), type: type as StatusType, updatedAt: now };
-  const newEntry: ActivityEntry = { text: text.trim(), type: type as StatusType, timestamp: now };
+  const newEntry: ActivityEntry = { text: text.trim(), type: type as StatusType, timestamp: now, source: resolvedSource };
 
   const existing = await readGist();
   const updatedLog = [newEntry, ...existing.log].slice(0, MAX_LOG_ENTRIES);
