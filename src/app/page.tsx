@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Tab = "brain" | "tasks" | "activity";
+type Tab = "tasks" | "activity";
 type StatusType = "task_start" | "task_done" | "idle" | "info";
 type ActivitySource = "reece" | "steve" | "cron";
 
@@ -510,7 +510,6 @@ function ActivityTab({
 // ─── Tab Bar ──────────────────────────────────────────────────────────────────
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
-  { id: "brain", label: "Brain", icon: "🧠" },
   { id: "tasks", label: "Tasks", icon: "📋" },
   { id: "activity", label: "Activity", icon: "⚡" },
 ];
@@ -518,7 +517,7 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
 // ─── Root ─────────────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
-  const [activeTab, setActiveTab] = useState<Tab>("activity");
+  const [activeTab, setActiveTab] = useState<Tab>("tasks");
 
   // Brain / Tasks shared data
   const [brainFiles, setBrainFiles] = useState<Record<string, string> | null>(null);
@@ -561,10 +560,10 @@ export default function Dashboard() {
     }
   }, []);
 
-  // Load brain data when tab is first accessed
+  // Load brain data when tasks tab is first accessed
   useEffect(() => {
     if (
-      (activeTab === "brain" || activeTab === "tasks") &&
+      activeTab === "tasks" &&
       brainFiles === null &&
       !brainLoading
     ) {
@@ -594,14 +593,6 @@ export default function Dashboard() {
 
       {/* Tab content — padded at bottom so tab bar doesn't overlap */}
       <main className="pb-safe" style={{ paddingBottom: "calc(4.5rem + env(safe-area-inset-bottom))" }}>
-        {activeTab === "brain" && (
-          <BrainTab
-            files={brainFiles}
-            loading={brainLoading}
-            error={brainError}
-            onRefresh={fetchBrain}
-          />
-        )}
         {activeTab === "tasks" && (
           <TasksTab
             files={brainFiles}
