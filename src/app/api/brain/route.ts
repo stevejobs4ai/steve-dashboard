@@ -5,17 +5,31 @@ const GITHUB_TOKEN = process.env.GITHUB_TOKEN!;
 
 export async function GET() {
   try {
-    const res = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+    // First get the gist metadata to find the raw_url for workspace.json
+    // (Gist API truncates files >1MB, so we must fetch via raw_url)
+    const metaRes = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
       headers: {
         Authorization: `Bearer ${GITHUB_TOKEN}`,
         Accept: "application/vnd.github+json",
       },
       cache: "no-store",
     });
-    if (!res.ok) throw new Error(`Gist fetch failed: ${res.status}`);
-    const gist = await res.json();
-    const content = gist.files["workspace.json"]?.content;
-    const files: Record<string, string> = content ? JSON.parse(content) : {};
+    if (!metaRes.ok) throw new Error(`Gist meta fetch failed: ${metaRes.status}`);
+    const gist = await metaRes.json();
+    const fileInfo = gist.files["workspace.json"];
+    if (!fileInfo) return NextResponse.json({ files: {} });
+
+    // If truncated, fetch full content from raw_url
+    let content: string;
+    if (fileInfo.truncated && fileInfo.raw_url) {
+      const rawRes = await fetch(fileInfo.raw_url, { cache: "no-store" });
+      if (!rawRes.ok) throw new Error(`Raw fetch failed: ${rawRes.status}`);
+      content = await rawRes.text();
+    } else {
+      content = fileInfo.content || "{}";
+    }
+
+    const files: Record<string, string> = JSON.parse(content);
     return NextResponse.json({ files });
   } catch (err) {
     console.error("GET /api/brain error:", err);
