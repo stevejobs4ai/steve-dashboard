@@ -6,6 +6,7 @@ import { useEffect, useState, useCallback } from "react";
 
 type Tab = "brain" | "tasks" | "activity";
 type StatusType = "task_start" | "task_done" | "idle" | "info";
+type ActivitySource = "reece" | "steve" | "cron";
 
 interface CurrentStatus {
   text: string;
@@ -17,6 +18,7 @@ interface ActivityEntry {
   text: string;
   type: StatusType;
   timestamp: string;
+  source?: ActivitySource;
 }
 
 interface StatusData {
@@ -409,6 +411,12 @@ const TYPE_STYLES: Record<StatusType, { color: string; label: string }> = {
   info: { color: "text-gray-500", label: "INFO" },
 };
 
+const SOURCE_STYLES: Record<ActivitySource, { bg: string; text: string; border: string }> = {
+  reece: { bg: "bg-orange-950", text: "text-orange-400", border: "border-orange-800" },
+  cron: { bg: "bg-violet-950", text: "text-violet-400", border: "border-violet-800" },
+  steve: { bg: "bg-green-950", text: "text-green-400", border: "border-green-800" },
+};
+
 function ActivityTab({
   data,
   loading,
@@ -456,8 +464,10 @@ function ActivityTab({
           </div>
         ) : (
           <ul className="divide-y divide-[#181818]">
-            {log.slice(0, 25).map((entry, i) => {
+            {log.slice(0, 50).map((entry, i) => {
               const { color, label } = TYPE_STYLES[entry.type];
+              const src = entry.source ?? "steve";
+              const srcStyle = SOURCE_STYLES[src];
               return (
                 <li
                   key={i}
@@ -471,9 +481,16 @@ function ActivityTab({
                   <span className="text-sm text-gray-300 flex-1 leading-relaxed">
                     {entry.text}
                   </span>
-                  <span className="text-[11px] font-mono text-gray-600 shrink-0 mt-0.5">
-                    {timeAgo(entry.timestamp)}
-                  </span>
+                  <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
+                    <span
+                      className={`text-[9px] font-mono font-bold px-1 py-0.5 rounded border ${srcStyle.bg} ${srcStyle.text} ${srcStyle.border}`}
+                    >
+                      {src}
+                    </span>
+                    <span className="text-[11px] font-mono text-gray-600">
+                      {timeAgo(entry.timestamp)}
+                    </span>
+                  </div>
                 </li>
               );
             })}
