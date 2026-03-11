@@ -328,73 +328,82 @@ const SECTION_STYLES: Record<
   },
 };
 
-function TasksTab({
-  files,
-  loading,
-  error,
-}: {
-  files: Record<string, string> | null;
-  loading: boolean;
-  error: string | null;
-}) {
+interface ApiTask {
+  id: string;
+  title: string;
+  status: string;
+  priority: number;
+  category: string;
+  createdAt: string;
+  completedAt?: string;
+  githubIssue?: number;
+}
+
+function TasksTab() {
+  const [tasks, setTasks] = useState<ApiTask[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/tasks", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((j) => { setTasks(j.tasks ?? []); setLoading(false); })
+      .catch((e) => { setError(e.message); setLoading(false); });
+  }, []);
+
   if (loading) return <LoadingState label="loading tasks…" />;
   if (error) return <ErrorBanner message={error} />;
+  if (tasks.length === 0) return <EmptyState message="no tasks" sub="create GitHub issues to see them here" />;
 
-  const heartbeat = files?.["HEARTBEAT.md"] ?? "";
-  if (!heartbeat) {
-    return (
-      <EmptyState
-        message="no HEARTBEAT.md found"
-        sub="sync HEARTBEAT.md to see tasks"
-      />
-    );
-  }
+  const groups: { key: string; colorKey: TaskSection["colorKey"]; emoji: string; label: string; items: ApiTask[] }[] = [
+    { key: "in_progress", colorKey: "yellow", emoji: "🟡", label: "In Progress", items: tasks.filter(t => t.status === "in_progress") },
+    { key: "todo", colorKey: "green", emoji: "🟢", label: "Pending", items: tasks.filter(t => t.status === "todo") },
+    { key: "done", colorKey: "sky", emoji: "✅", label: "Done", items: tasks.filter(t => t.status === "done") },
+  ];
 
-  const sections = parseHeartbeat(heartbeat);
-
-  if (sections.length === 0) {
-    return (
-      <EmptyState
-        message="no task sections parsed"
-        sub="HEARTBEAT.md needs ## 🔴/🟡/🟢/✅ sections"
-      />
-    );
+  function formatDate(d: string) {
+    return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
   }
 
   return (
     <div className="px-4 py-4 space-y-4">
-      {sections.map((section) => {
-        const s = SECTION_STYLES[section.colorKey];
+      {groups.map((group) => {
+        if (group.items.length === 0) return null;
+        const s = SECTION_STYLES[group.colorKey];
         return (
-          <div
-            key={section.title}
-            className={`rounded-xl border ${s.border} ${s.bg} overflow-hidden`}
-          >
+          <div key={group.key} className={`rounded-xl border ${s.border} ${s.bg} overflow-hidden`}>
             <div className={`px-4 py-3 flex items-center gap-2 border-b ${s.border}`}>
               <span className={`w-2 h-2 rounded-full shrink-0 ${s.dot}`} />
               <span className={`text-sm font-bold font-mono ${s.text}`}>
-                {section.title}
+                {group.emoji} {group.label}
               </span>
-              <span className="ml-auto text-xs font-mono text-gray-600">
-                {section.items.length}
-              </span>
+              <span className="ml-auto text-xs font-mono text-gray-600">{group.items.length}</span>
             </div>
-            {section.items.length === 0 ? (
-              <div className="px-4 py-3 text-gray-700 text-xs font-mono italic">
-                empty
-              </div>
-            ) : (
-              <ul className="divide-y divide-white/[0.04]">
-                {section.items.map((item, i) => (
-                  <li key={i} className="flex items-start gap-3 px-4 py-3">
-                    <span className={`mt-1 text-[10px] shrink-0 ${s.text}`}>›</span>
-                    <span className="text-sm text-gray-300 leading-relaxed">
-                      {item}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <ul className="divide-y divide-white/[0.04]">
+              {group.items.map((task) => (
+                <li key={task.id} className="flex items-start gap-3 px-4 py-3">
+                  <span className={`mt-1 text-[10px] shrink-0 ${s.text}`}>›</span>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-sm text-gray-300 leading-relaxed">{task.title}</span>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-[10px] font-mono text-gray-600 uppercase">{task.category}</span>
+                      {task.githubIssue && (
+                        <a href={`https://github.com/reecealanboyd/evetero/issues/${task.githubIssue}`}
+                           target="_blank" rel="noopener noreferrer"
+                           className="text-[10px] font-mono text-gray-600 hover:text-gray-400">
+                          #{task.githubIssue}
+                        </a>
+                      )}
+                      {task.completedAt && (
+                        <span className="text-[10px] font-mono text-gray-600">
+                          done {formatDate(task.completedAt)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
           </div>
         );
       })}
@@ -594,11 +603,7 @@ export default function Dashboard() {
       {/* Tab content — padded at bottom so tab bar doesn't overlap */}
       <main className="pb-safe" style={{ paddingBottom: "calc(4.5rem + env(safe-area-inset-bottom))" }}>
         {activeTab === "tasks" && (
-          <TasksTab
-            files={brainFiles}
-            loading={brainLoading}
-            error={brainError}
-          />
+          <TasksTab />
         )}
         {activeTab === "activity" && (
           <ActivityTab
